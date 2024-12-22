@@ -1,0 +1,88 @@
+import numpy as np 
+import pandas as pd 
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+import matplotlib.pyplot as plt 
+import seaborn as sns
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+import scipy.stats as stats
+
+# Load the dataset
+data = pd.read_csv("/kaggle/input/electric-vehicle-charging-dataset/station_data_dataverse.csv")
+data
+
+
+# Drop rows with missing values
+data_clean = data.dropna()
+
+# Select features and target variable
+features = ['Battery Capacity (kWh)', 'Charging Duration (hours)', 
+            'Charging Rate (kW)', 'Temperature (°C)', 'Distance Driven (since last charge) (km)']
+target = 'Energy Consumed (kWh)'
+
+X = data_clean[features]
+y = data_clean[target]
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Train a Linear Regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+# Print results
+print("Mean Squared Error (MSE):", mse)
+print("R-squared (R2):", r2)
+print("Coefficients:", model.coef_)
+print("Intercept:", model.intercept_)
+
+# Residual plot
+residuals = y_test - y_pred
+plt.figure(figsize=(10, 6))
+sns.histplot(residuals, kde=True, color='red')
+plt.xlabel('Residuals')
+plt.title('Residuals Distribution')
+plt.grid(True)
+plt.show()
+
+
+# Random Forest Regressor
+
+future_data = np.array([[75, 2.5, 30, 20, 150]])  # Example data for forecasting
+future_prediction = model.predict(future_data)
+print("Future Prediction (Energy Consumed):", future_prediction)
+
+# Clustering to identify similar behaviors kmeans = KMeans(n_clusters=3, random_state=42)
+kmeans.fit(X)
+data_clean['Cluster'] = kmeans.labels_
+
+# Visualize clusters
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Charging Duration (hours)', y='Energy Consumed (kWh)', hue='Cluster', data=data_clean, palette='viridis')
+plt.title('Clustering Based on Charging Duration and Energy Consumed')
+plt.xlabel('Charging Duration (hours)')
+plt.ylabel('Energy Consumed (kWh)')
+plt.grid(True)
+plt.show()
+
+# K-Nearest Neighbors (KNN) for classification
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_scaled, kmeans.labels_)
+
+# Predict clusters for new data
+new_data = scaler.transform([[75, 2.5, 30, 20, 150]])
+predicted_cluster = knn.predict(new_data)
+print("Predicted Cluster for New Data:", predicted_cluster)
